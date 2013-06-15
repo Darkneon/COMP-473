@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+   <head>
+    <title>Assignment 2</title>
+
+      <script type="text/javascript" src="patterns.js"></script>
+      <script type="text/javascript" src="helpers.js"></script>
+      <script type="text/javascript" src="graphics.js"></script>
+      <script type="text/javascript" src="algorithms.js"></script>
+      <script type="text/javascript" src="chain.js"></script>
+
+      <style> 
+         body {
+            background: #dddddd;
+         }
+
+         #canvas {
+            background: #eeeeee;
+            border: thin solid #aaaaaa;
+         }
+      </style>
+   </head>
+
+  <body>
+    <canvas id='canvas' width='1000' height='3000'>
+      Canvas not supported
+    </canvas>
+
+    <script language="javascript"> 
+      function endpoints(context, pixels, offsetx, offsety) {
+        var result = new Array();
+        var rows   = pixels.length;
+        var cols   = pixels[0].length;
+          
+        for (var r = 1; r != rows - 1; r++) {
+          for (var c = 1; c != cols - 1; c++) {                
+            if (pixels[r][c] === 1) {                
+              if (nays8(pixels, r, c) == 1) {
+                context.strokeStyle = "lime";
+                context.lineWidth = 2;
+                context.beginPath();
+                context.arc((c) * PIXEL_SIZE + offsetx, (r+0.5) * PIXEL_SIZE + offsety, 8, 0, Math.PI*2, true); 
+                context.closePath();
+                context.stroke();
+                result.push({row: r, col: c});
+              }
+            }
+          }
+        }
+
+        return result;
+      }
+
+      function checkcross(context, pixels, r, c, offsetx, offsety) {
+        if (pixels[r][c] == 0) { return; }
+
+        var masks = [
+          [
+            [0, 1, 0],
+            [0, 1, 0],
+            [1, 1, 1]
+          ],
+          [
+            [1, 1, 1],
+            [0, 1, 0],
+            [0, 1, 0]
+          ],
+          [
+            [0, 0, 1],
+            [1, 1, 1],
+            [0, 0, 1]
+          ],
+          [
+            [1, 0, 0],
+            [1, 1, 1],
+            [1, 0, 0]
+          ],
+          [
+            [0, 0, 1],
+            [0, 1, 0],
+            [1, 0, 1]
+          ],
+          [
+            [1, 0, 1],
+            [0, 1, 0],
+            [1, 0, 0]
+          ],
+          [
+            [1, 0, 1],
+            [0, 1, 0],
+            [1, 0, 1]
+          ]
+        ]
+
+        var m = 0;
+        for (m = 0; m != masks.length; m++) {
+          
+          var ismatch = true;
+          for (var i = -1; i <= 1; i++) {
+            for (var j = -1; j <= 1; j++) {
+              if (pixels[r + i][c + j] !== masks[m][1+ i][1 + j]) { ismatch = false;}
+            }
+          }
+
+          if (ismatch === true) { break; }
+        }
+
+        if (ismatch === true) {
+          for (var i = -1; i <= 1; i++) {
+            for (var j = -1; j <= 1; j++) {
+              if (masks[m][1 + i][1 + j] === 1) {
+                drawPixel(context, c + j + offsetx, r + i + offsety, 0, 255, 0);              
+              }
+            }
+          } 
+        }
+
+        return ismatch;
+      }
+
+      function crosslines(context, pixels, offsetx, offsety) {
+        var result = new Array();
+        var rows   = pixels.length;
+        var cols   = pixels[0].length;
+
+        for (var r = 1; r != rows - 2; r++) {
+          for (var c = 1; c != cols - 2; c++) {                
+            if (checkcross(context, pixels, r, c, Math.floor(offsetx / PIXEL_SIZE), offsety)) {
+              result.push({row: r, col: c});
+            }        
+          }
+        }
+
+        return result;
+      }
+
+      var CACHE = {};
+
+      var canvas = document.getElementById("canvas");
+      var ctx = canvas.getContext("2d");
+
+      clear(ctx);
+
+      var DISPLAY_OFFSET_X = 350;
+      var PADDING_Y = 22;
+
+      for (var i = 2; i != 12; i++) {
+        var offsety = (i - 2) * PADDING_Y * PIXEL_SIZE;
+        display(ctx, patterns[i], 0, offsety);
+
+        var skel = thnz(patterns[i], 0, 0);
+        display(ctx, skel, DISPLAY_OFFSET_X, offsety);
+
+        endpoints(ctx, skel, DISPLAY_OFFSET_X, offsety);
+        crosslines(ctx, skel, DISPLAY_OFFSET_X, (i - 2) * PADDING_Y);
+      }
+
+      drawGrid(ctx, 'blue', PIXEL_SIZE, PIXEL_SIZE);
+        
+    </script>
+
+
+  </body>
+</html>
